@@ -1,10 +1,18 @@
 import React from "react";
-import { StyleSheet, Text, View, Image, Button } from "react-native";
-
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableHighlight
+} from "react-native";
+import { Button, Icon, Content, Spinner, Container } from "native-base";
 import QRCode from "react-native-qrcode";
 import firebase from "../firebase";
 import "firebase/auth";
 import "firebase/firestore";
+import { NavigationEvents } from "react-navigation";
+
 var db = firebase.firestore();
 export default class HomeScreen extends React.Component {
   state = {
@@ -12,23 +20,55 @@ export default class HomeScreen extends React.Component {
     loaded: false,
     value: {
       name: "",
-      url: ""
-    }
+      url: "",
+      userID: ""
+    },
+    visible: false
   };
   static navigationOptions = ({ navigation }) => {
     return {
-      headerTitle: "Card",
+      headerTitle: "Profile",
       headerRight: (
         <Button
-          title="Edit"
+          transparent
           onPress={() => {
             navigation.navigate("Settings");
           }}
-        />
-      )
+        >
+          <Icon name="more" style={{ color: "white" }} />
+        </Button>
+      ),
+      headerLeft: (
+        <Button
+          transparent
+          onPress={() => {
+            navigation.openDrawer();
+          }}
+        >
+          <Icon name="menu" style={{ color: "white" }} />
+        </Button>
+      ),
+      headerStyle: {
+        backgroundColor: "#00aaff"
+      },
+      headerTitleStyle: {
+        color: "white",
+        fontWeight: "bold"
+      }
     };
   };
-  componentDidMount() {
+  QRtouched = () => {
+    this.setState({ visible: true });
+  };
+  handleCreateCard() {
+    this.props.navigation.navigate({
+      routeName: "Settings",
+      params: {
+        userID: this.state.value.userID
+      }
+    });
+  }
+  refreshCard = () => {
     var docRef = db.collection("Cards").doc(firebase.auth().currentUser.uid);
     docRef
       .get()
@@ -37,10 +77,14 @@ export default class HomeScreen extends React.Component {
           this.setState({
             value: {
               name: doc.data().name,
-              url: doc.data().url
+              url: doc.data().url,
+              userID: docRef.id
             },
             exists: true,
             loaded: true
+          });
+          this.props.navigation.setParams({
+            userValues: this.state.value
           });
         } else {
           this.setState({
@@ -53,45 +97,82 @@ export default class HomeScreen extends React.Component {
       .catch(function(error) {
         console.log("Error getting document:", error);
       });
+  };
+  componentDidMount() {
+    this.refreshCard();
   }
 
   render() {
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <Image
-              style={styles.avatar}
-              source={{
-                uri: "https://bootdey.com/img/Content/avatar/avatar6.png"
-              }}
-            />
+      <Container>
+        <NavigationEvents onWillFocus={this.refreshCard} />
+        <Content>
+          <View style={styles.container}>
+            <View style={styles.header}>
+              {this.state.exists ? (
+                <View style={styles.headerContent}>
+                  <Image
+                    style={styles.avatar}
+                    source={{
+                      uri: "https://bootdey.com/img/Content/avatar/avatar6.png"
+                    }}
+                  />
 
-            <Text style={styles.name}>John Doe </Text>
-            <Text style={styles.userInfo}>jhonnydoe@mal.com </Text>
-            <Text style={styles.userInfo}>Florida </Text>
-            <View style={styles.qr}>
-              <QRCode
-                value={this.state.value}
-                size={250}
-                bgColor="black"
-                fgColor="white"
-              />
+                  <Text style={styles.name}>{this.state.value.name} </Text>
+                  <Text style={styles.userInfo}>{this.state.value.url} </Text>
+                  <Text style={styles.userInfo}>More info </Text>
+
+                  <View style={styles.qr}>
+                    <QRCode
+                      value={this.state.value}
+                      size={250}
+                      bgColor="black"
+                      fgColor="white"
+                    />
+                  </View>
+                </View>
+              ) : (
+                <Container>
+                  <Content>
+                    {this.state.loaded ? (
+                      <Button
+                        title="Create a card"
+                        onPress={this.handleCreateCard}
+                      >
+                        <Text>Create a Card</Text>
+                      </Button>
+                    ) : (
+                      <Spinner style={{ marginTop: 40 }} color="grey" />
+                    )}
+                  </Content>
+                </Container>
+              )}
             </View>
           </View>
-        </View>
-      </View>
+        </Content>
+      </Container>
     );
   }
 }
 
 const styles = StyleSheet.create({
+  container: {
+    padding: 15,
+    flex: 1
+  },
   header: {
     marginBottom: 0,
-    backgroundColor: "#DCDCDC"
+    backgroundColor: "white",
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 3
+    },
+    shadowRadius: 5,
+    shadowOpacity: 0.8
   },
   headerContent: {
-    padding: 30,
+    padding: 20,
     alignItems: "center"
   },
   avatar: {
@@ -99,13 +180,20 @@ const styles = StyleSheet.create({
     height: 130,
     borderRadius: 63,
     borderWidth: 4,
-    borderColor: "white",
+    borderColor: "black",
     marginBottom: 20,
     marginTop: 20
   },
   qr: {
-    padding: 30,
-    paddingBottom: 60
+    padding: 10,
+    paddingBottom: 30,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 3
+    },
+    shadowRadius: 5,
+    shadowOpacity: 0.8
   },
   name: {
     fontSize: 22,

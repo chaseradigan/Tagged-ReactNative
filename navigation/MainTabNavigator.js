@@ -10,9 +10,11 @@ import MyCardScreen from "../screens/MyCardScreen";
 import CameraScreen from "../screens/CameraScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import ContactsScreen from "../screens/ContactsScreen";
+import ProfilesScreen from "../screens/ProfilesScreen";
 
 const HomeStack = createStackNavigator({
-  Home: MyCardScreen
+  Home: MyCardScreen,
+  Settings: SettingsScreen
 });
 
 HomeStack.navigationOptions = {
@@ -40,7 +42,8 @@ CameraStack.navigationOptions = {
 };
 
 const ContactsStack = createStackNavigator({
-  Contacts: ContactsScreen
+  Contacts: ContactsScreen,
+  Profiles: ProfilesScreen
 });
 
 ContactsStack.navigationOptions = {

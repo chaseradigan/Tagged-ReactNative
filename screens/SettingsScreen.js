@@ -11,10 +11,14 @@ import {
   Item,
   Input,
   Label,
-  Button
+  Button,
+  Icon,
+  View,
+  Text,
+  Footer
 } from "native-base";
 import { ImagePicker } from "expo";
-import { Image, View, Text, StyleSheet } from "react-native";
+import { Image, StyleSheet, Alert } from "react-native";
 
 import { CAMERA_ROLL, Permissions } from "expo";
 var db = firebase.firestore();
@@ -28,13 +32,12 @@ export default class SettingsScreen extends React.Component {
       headerLeft: (
         <Button
           transparent
-          light
-          style={{ marginLeft: 10 }}
+          style={{ fontWeight: "bold", marginLeft: 10 }}
           onPress={() => {
-            navigation.navigate("Main");
+            navigation.goBack();
           }}
         >
-          <Ionicons name="ios-arrow-back" size={32} color="black" />
+          <Icon name="arrow-back" style={{ color: "black" }} />
         </Button>
       )
     };
@@ -43,8 +46,12 @@ export default class SettingsScreen extends React.Component {
     image: null,
     name: "",
     url: "",
+    insta: "",
+    twitter: "",
+    linkedin: "",
     saved: false,
-    exists: false
+    exists: false,
+    loaded: false
   };
   componentDidMount() {
     var docRef = db.collection("Cards").doc(firebase.auth().currentUser.uid);
@@ -55,10 +62,12 @@ export default class SettingsScreen extends React.Component {
           this.setState({
             name: doc.data().name,
             url: doc.data().url,
-            exists: true
+            exists: true,
+            loaded: true
           });
         } else {
           // doc.data() will be undefined in this case
+          this.setState({ loaded: true });
           console.log("No such document!");
         }
       })
@@ -66,15 +75,15 @@ export default class SettingsScreen extends React.Component {
         console.log("Error getting document:", error);
       });
   }
-  handleLogout = () => {
-    firebase
-      .auth()
-      .signOut()
+  handleDelete = () => {
+    db.collection("Cards")
+      .doc(firebase.auth().currentUser.uid)
+      .delete()
       .then(function() {
-        this.props.navigation.navigate("Login");
+        Alert.alert("Alert", "Card Deleted");
       })
       .catch(function(error) {
-        console.log(error.response);
+        Alert.alert("Alert", error.response);
       });
   };
   handleUpdate = () => {
@@ -82,6 +91,15 @@ export default class SettingsScreen extends React.Component {
     var o = {};
     o.name = this.state.name;
     o.url = this.state.url;
+    if (this.state.insta.length > 1) {
+      o.insta = this.state.insta;
+    }
+    if (this.state.linkedin.length > 1) {
+      o.linkedin = this.state.linkedin;
+    }
+    if (this.state.twitter.length > 1) {
+      o.twitter = this.state.twitter;
+    }
     docRef.update(o);
     this.setState({
       saved: true
@@ -112,18 +130,27 @@ export default class SettingsScreen extends React.Component {
     let { image } = this.state;
     return (
       <Container>
-        <Content>
-          <Button onPress={this._pickImage}>
-            <Text>Choose Image</Text>
-          </Button>
-          {image && (
-            <Image
-              source={{ uri: image }}
-              style={{ width: 200, height: 200 }}
-            />
-          )}
-          <Image source={this.image} style={{ width: 200, height: 200 }} />
+        <Content
+          contentContainerStyle={{
+            justifyContent: "center",
+            flex: 1,
+            margin: 10,
+            alignItems: "center"
+          }}
+        >
           <Form>
+            <Item>
+              <Button block transparent info onPress={this._pickImage}>
+                <Text>Choose Image</Text>
+              </Button>
+              {image && (
+                <Image
+                  source={{ uri: image }}
+                  style={{ width: 200, height: 200 }}
+                />
+              )}
+              <Image source={this.image} style={{ width: 200, height: 200 }} />
+            </Item>
             <Item inlineLabel>
               <Label>Name</Label>
               <Input
@@ -131,23 +158,68 @@ export default class SettingsScreen extends React.Component {
                 value={this.state.name}
               />
             </Item>
-            <Item inlineLabel last>
-              <Label>URL</Label>
+            <Item inlineLabel>
+              <Label>Phone Number</Label>
               <Input
                 onChangeText={url => this.setState({ url })}
                 value={this.state.url}
               />
             </Item>
+            <Item>
+              <Icon name="logo-instagram" />
+              <Input
+                placeholder="Instagram"
+                placeholderTextColor="grey"
+                onChangeText={insta => this.setState({ insta })}
+                value={this.state.insta}
+              />
+            </Item>
+            <Item>
+              <Icon name="logo-linkedin" />
+              <Input
+                placeholder="LinkedIn"
+                placeholderTextColor="grey"
+                onChangeText={linkedin => this.setState({ linkedin })}
+                value={this.state.linkedin}
+              />
+            </Item>
+            <Item>
+              <Icon name="logo-twitter" />
+              <Input
+                placeholder="Twitter"
+                placeholderTextColor="grey"
+                onChangeText={twitter => this.setState({ twitter })}
+                value={this.state.twitter}
+              />
+            </Item>
           </Form>
-          {this.state.saved ? <Text>Saved!</Text> : <Text />}
+          <View style={{ alignItems: "center" }}>
+            {this.state.saved ? <Text>Saved!</Text> : <Text />}
+            {this.state.exists ? (
+              <Button rounded info onPress={this.handleUpdate}>
+                <Text>Update</Text>
+              </Button>
+            ) : (
+              <View>
+                {this.state.loaded ? (
+                  <Button rounded info onPress={this.handleSave}>
+                    <Text>Save</Text>
+                  </Button>
+                ) : (
+                  <Button rounded info>
+                    <Text>Save</Text>
+                  </Button>
+                )}
+              </View>
+            )}
+          </View>
         </Content>
-        {this.state.exists ? (
-          <Button title="Update" onPress={this.handleUpdate} />
-        ) : (
-          <Button title="Create" onPress={this.handleSave} />
-        )}
-
-        <Button title="Logout" onPress={this.handleLogout} />
+        <View style={{ marginBottom: 5 }}>
+          <Button iconLeft danger full onPress={this.handleDelete}>
+            <Icon style={{ color: "white" }} name="trash" />
+            <Text>Delete</Text>
+          </Button>
+        </View>
       </Container>
     );
   }

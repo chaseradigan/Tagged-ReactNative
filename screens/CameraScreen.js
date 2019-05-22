@@ -1,10 +1,14 @@
 import React from "react";
+import firebase from "../firebase";
+import "firebase/firestore";
+import "firebase/auth";
 import { Text, View, StyleSheet, Button } from "react-native";
 import { Constants, Permissions, BarCodeScanner } from "expo";
+import { Container, Content, Spinner } from "native-base";
 
 export default class LinksScreen extends React.Component {
   static navigationOptions = {
-    title: "Card Scanner"
+    title: "Scan a Card"
   };
   state = {
     hasCameraPermission: null,
@@ -19,7 +23,13 @@ export default class LinksScreen extends React.Component {
     const { hasCameraPermission, scanned } = this.state;
 
     if (hasCameraPermission === null) {
-      return <Text>Requesting for camera permission</Text>;
+      return (
+        <Container>
+          <Content>
+            <Spinner color="blue" />
+          </Content>
+        </Container>
+      );
     }
     if (hasCameraPermission === false) {
       return <Text>No access to camera</Text>;
@@ -48,7 +58,28 @@ export default class LinksScreen extends React.Component {
 
   handleBarCodeScanned = ({ type, data }) => {
     this.setState({ scanned: true });
-    alert(`Bar code with type ${type} and data ${data} has been scanned!`);
+
+    var cardsRef = db.collection("Contacts");
+    cardsRef
+      .doc(data.userID)
+      .set({
+        name: data.name,
+        url: this.state.url,
+        date: new Date(),
+        insta: data.insta,
+        linkedin: data.linkedin,
+        twitter: data.twitter
+        // image: this.state.image,
+      })
+      .then(response => {
+        alert(
+          `Bar code with type ${type} and data ${data} has been scanned and saved!`
+        );
+      })
+      .catch(function(error) {
+        alert("Bar code not scanned!");
+        console.error("Error adding document: ", error);
+      });
   };
 }
 

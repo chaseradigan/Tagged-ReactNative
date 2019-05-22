@@ -5,9 +5,7 @@ import MainTabNavigator from "./MainTabNavigator";
 import LoadingScreen from "../screens/LoadingScreen";
 import SignUpScreen from "../screens/SignUpScreen";
 import LoginScreen from "../screens/LoginScreen";
-import SettingsScreen from "../screens/SettingsScreen";
-import SettingsStack from "./SettingsStack";
-import ProfilesStack from "./ProfilesStack";
+import DrawerNavigator from "./Drawer";
 
 export default createAppContainer(
   createSwitchNavigator(
@@ -18,8 +16,7 @@ export default createAppContainer(
       SignUp: SignUpScreen,
       Login: LoginScreen,
       Main: MainTabNavigator,
-      Settings: SettingsStack,
-      Profile: ProfilesStack
+      Drawer: DrawerNavigator
     },
     {
       backBehavior: "order",

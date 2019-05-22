@@ -11,9 +11,10 @@ import {
 } from "react-native";
 import firebase from "../firebase";
 import "firebase/auth";
+import { Container, Header, Item, Input, Icon, Button } from "native-base";
 export default class ContactsScreen extends React.Component {
   static navigationOptions = {
-    title: "Contacts"
+    header: null
   };
   constructor(props) {
     super(props);
@@ -97,6 +98,16 @@ export default class ContactsScreen extends React.Component {
   render() {
     return (
       <View style={styles.container}>
+        <Header style={{ backgroundColor: "#00aaff" }} searchBar rounded>
+          <Item>
+            <Icon style={{ color: "white" }} name="ios-search" />
+            <Input style={{ color: "white" }} placeholder="Search" />
+            <Icon style={{ color: "white" }} name="ios-people" />
+          </Item>
+          <Button transparent>
+            <Text style={{ color: "white" }}>Search</Text>
+          </Button>
+        </Header>
         <FlatList
           style={styles.list}
           contentContainerStyle={styles.listContainer}
@@ -134,7 +145,8 @@ export default class ContactsScreen extends React.Component {
                       style={styles.followButton}
                       onPress={() => this.clickEventListener(item)}
                     >
-                      <Text style={styles.followButtonText}>Follow</Text>
+                      <Text style={styles.followButtonText}>Contact</Text>
+                      <Icon style={{ color: "white" }} name="add" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -165,7 +177,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: 6
     },
-    shadowOpacity: 0.37,
+    shadowOpacity: 0.5,
     shadowRadius: 7.49,
     elevation: 12,
 

@@ -8,8 +8,7 @@ import {
   Alert,
   ScrollView
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { Button } from "native-base";
+import { Button, Icon } from "native-base";
 export default class ProfilesScreen extends Component {
   constructor(props) {
     super(props);
@@ -19,14 +18,15 @@ export default class ProfilesScreen extends Component {
       headerTitle: null,
       headerLeft: (
         <Button
+          iconLeft
           transparent
-          light
-          style={{ marginLeft: 10 }}
+          style={{ fontWeight: "bold", marginLeft: 15 }}
           onPress={() => {
-            navigation.navigate("Main");
+            navigation.goBack();
           }}
         >
-          <Ionicons name="ios-arrow-back" size={32} color="black" />
+          <Icon name="arrow-back" />
+          <Text>Back</Text>
         </Button>
       )
     };
@@ -39,7 +39,6 @@ export default class ProfilesScreen extends Component {
     const { navigation } = this.props;
     const itemId = navigation.getParam("itemId", "NO-ID");
     const title = navigation.getParam("title", "some default value");
-    console.log(this.props);
     return (
       <ScrollView style={styles.scrollContainer}>
         <View style={styles.container}>
@@ -57,46 +56,28 @@ export default class ProfilesScreen extends Component {
               style={[styles.button, styles.buttonMessage]}
               onPress={() => this.onClickListener("message")}
             >
-              <Image
-                style={styles.icon}
-                source={{
-                  uri: "https://png.icons8.com/message/win8/100/ffffff"
-                }}
-              />
+              <Icon name="person-add" />
             </TouchableHighlight>
 
             <TouchableHighlight
-              style={[styles.button, styles.buttonLike]}
-              onPress={() => this.onClickListener("like")}
+              style={[styles.button, styles.buttonLinkedIn]}
+              onPress={() => this.onClickListener("linkedin")}
             >
-              <Image
-                style={styles.icon}
-                source={{
-                  uri: "https://png.icons8.com/facebook-like/win10/100/ffffff"
-                }}
-              />
+              <Icon name="logo-linkedin" />
             </TouchableHighlight>
 
             <TouchableHighlight
-              style={[styles.button, styles.buttonLove]}
-              onPress={() => this.onClickListener("love")}
+              style={[styles.button, styles.buttonInstagram]}
+              onPress={() => this.onClickListener("instagram")}
             >
-              <Image
-                style={styles.icon}
-                source={{
-                  uri: "https://png.icons8.com/heart/androidL/100/ffffff"
-                }}
-              />
+              <Icon name="logo-instagram" />
             </TouchableHighlight>
 
             <TouchableHighlight
-              style={[styles.button, styles.buttonCall]}
+              style={[styles.button, styles.buttonTwitter]}
               onPress={() => this.onClickListener("phone")}
             >
-              <Image
-                style={styles.icon}
-                source={{ uri: "https://png.icons8.com/phone/win8/100/ffffff" }}
-              />
+              <Icon name="logo-twitter" />
             </TouchableHighlight>
           </View>
         </View>
@@ -138,7 +119,9 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",
-    marginTop: 20
+    marginTop: 20,
+    alignItems: "center",
+    justifyContent: "center"
   },
 
   button: {
@@ -159,16 +142,16 @@ const styles = StyleSheet.create({
     elevation: 4
   },
   buttonMessage: {
-    backgroundColor: "#00BFFF"
+    backgroundColor: "#d7d7d8"
   },
-  buttonLike: {
-    backgroundColor: "#228B22"
+  buttonLinkedIn: {
+    backgroundColor: "#0077b5"
   },
-  buttonLove: {
-    backgroundColor: "#FF1493"
+  buttonInstagram: {
+    backgroundColor: "#5851db"
   },
-  buttonCall: {
-    backgroundColor: "#40E0D0"
+  buttonTwitter: {
+    backgroundColor: "#1da1f2"
   },
   icon: {
     width: 35,
