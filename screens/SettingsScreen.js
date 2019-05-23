@@ -37,7 +37,7 @@ export default class SettingsScreen extends React.Component {
             navigation.goBack();
           }}
         >
-          <Icon name="arrow-back" style={{ color: "black" }} />
+          <Icon name="arrow-back" style={{ color: "#2A363b" }} />
         </Button>
       )
     };
@@ -53,7 +53,7 @@ export default class SettingsScreen extends React.Component {
     exists: false,
     loaded: false
   };
-  componentDidMount() {
+  componentWillMount() {
     var docRef = db.collection("Cards").doc(firebase.auth().currentUser.uid);
     docRef
       .get()
@@ -62,6 +62,8 @@ export default class SettingsScreen extends React.Component {
           this.setState({
             name: doc.data().name,
             url: doc.data().url,
+            insta: doc.data().insta,
+            twitter: doc.data().twitter,
             exists: true,
             loaded: true
           });
@@ -91,7 +93,7 @@ export default class SettingsScreen extends React.Component {
     var o = {};
     o.name = this.state.name;
     o.url = this.state.url;
-    if (this.state.insta.length > 1) {
+    if (this.state.insta.length > 0) {
       o.insta = this.state.insta;
     }
     if (this.state.linkedin.length > 1) {
@@ -138,83 +140,92 @@ export default class SettingsScreen extends React.Component {
             alignItems: "center"
           }}
         >
-          <Form>
-            <Item>
-              <Button block transparent info onPress={this._pickImage}>
-                <Text>Choose Image</Text>
-              </Button>
-              {image && (
-                <Image
-                  source={{ uri: image }}
-                  style={{ width: 200, height: 200 }}
-                />
-              )}
-              <Image source={this.image} style={{ width: 200, height: 200 }} />
-            </Item>
-            <Item inlineLabel>
-              <Label>Name</Label>
-              <Input
-                onChangeText={name => this.setState({ name })}
-                value={this.state.name}
-              />
-            </Item>
-            <Item inlineLabel>
-              <Label>Phone Number</Label>
-              <Input
-                onChangeText={url => this.setState({ url })}
-                value={this.state.url}
-              />
-            </Item>
-            <Item>
-              <Icon name="logo-instagram" />
-              <Input
-                placeholder="Instagram"
-                placeholderTextColor="grey"
-                onChangeText={insta => this.setState({ insta })}
-                value={this.state.insta}
-              />
-            </Item>
-            <Item>
-              <Icon name="logo-linkedin" />
-              <Input
-                placeholder="LinkedIn"
-                placeholderTextColor="grey"
-                onChangeText={linkedin => this.setState({ linkedin })}
-                value={this.state.linkedin}
-              />
-            </Item>
-            <Item>
-              <Icon name="logo-twitter" />
-              <Input
-                placeholder="Twitter"
-                placeholderTextColor="grey"
-                onChangeText={twitter => this.setState({ twitter })}
-                value={this.state.twitter}
-              />
-            </Item>
-          </Form>
-          <View style={{ alignItems: "center" }}>
-            {this.state.saved ? <Text>Saved!</Text> : <Text />}
-            {this.state.exists ? (
-              <Button rounded info onPress={this.handleUpdate}>
-                <Text>Update</Text>
-              </Button>
-            ) : (
-              <View>
-                {this.state.loaded ? (
-                  <Button rounded info onPress={this.handleSave}>
-                    <Text>Save</Text>
+          <View style={styles.container}>
+            <View style={styles.header}>
+              <Form>
+                <Item>
+                  <Button block transparent info onPress={this._pickImage}>
+                    <Text>Choose Image</Text>
                   </Button>
+                  {image && (
+                    <Image
+                      source={{ uri: image }}
+                      style={{ width: 200, height: 200 }}
+                    />
+                  )}
+                  <Image
+                    source={this.image}
+                    style={{ width: 200, height: 200 }}
+                  />
+                </Item>
+                <Item inlineLabel>
+                  <Label>Name</Label>
+                  <Input
+                    onChangeText={name => this.setState({ name })}
+                    value={this.state.name}
+                  />
+                </Item>
+                <Item inlineLabel>
+                  <Label>Phone Number</Label>
+                  <Input
+                    onChangeText={url => this.setState({ url })}
+                    value={this.state.url}
+                  />
+                </Item>
+                <Item>
+                  <Icon name="logo-instagram" />
+                  <Input
+                    placeholder="Instagram"
+                    placeholderTextColor="grey"
+                    onChangeText={insta => this.setState({ insta })}
+                    value={this.state.insta}
+                  />
+                </Item>
+                <Item>
+                  <Icon name="logo-linkedin" />
+                  <Input
+                    placeholder="LinkedIn"
+                    placeholderTextColor="grey"
+                    onChangeText={linkedin => this.setState({ linkedin })}
+                    value={this.state.linkedin}
+                  />
+                </Item>
+                <Item>
+                  <Icon name="logo-twitter" />
+                  <Input
+                    placeholder="Twitter"
+                    placeholderTextColor="grey"
+                    onChangeText={twitter => this.setState({ twitter })}
+                    value={this.state.twitter}
+                  />
+                </Item>
+              </Form>
+              <View style={{ alignItems: "center", paddingBottom: 10 }}>
+                {this.state.saved ? <Text>Saved!</Text> : <Text />}
+                {this.state.exists ? (
+                  <View>
+                    <Button rounded info onPress={this.handleUpdate}>
+                      <Text>Update</Text>
+                    </Button>
+                  </View>
                 ) : (
-                  <Button rounded info>
-                    <Text>Save</Text>
-                  </Button>
+                  <View>
+                    {this.state.loaded ? (
+                      <Button rounded info onPress={this.handleSave}>
+                        <Text>Save</Text>
+                      </Button>
+                    ) : (
+                      <Button rounded info>
+                        <Text>Save</Text>
+                      </Button>
+                    )}
+                  </View>
                 )}
               </View>
-            )}
+            </View>
           </View>
         </Content>
-        <View style={{ marginBottom: 5 }}>
+        <View style={{ marginBottom: 1 }}>
           <Button iconLeft danger full onPress={this.handleDelete}>
             <Icon style={{ color: "white" }} name="trash" />
             <Text>Delete</Text>
@@ -247,6 +258,22 @@ export default class SettingsScreen extends React.Component {
   };
 }
 const styles = StyleSheet.create({
+  container: {
+    padding: 15,
+    paddingBottom: 10,
+    flex: 1
+  },
+  header: {
+    marginBottom: 0,
+    backgroundColor: "white",
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 3
+    },
+    shadowRadius: 5,
+    shadowOpacity: 0.8
+  },
   back: {
     flex: 1,
     top: 20,

@@ -5,7 +5,7 @@ import "firebase/auth";
 import { Text, View, StyleSheet, Button } from "react-native";
 import { Constants, Permissions, BarCodeScanner } from "expo";
 import { Container, Content, Spinner } from "native-base";
-
+var db = firebase.firestore();
 export default class LinksScreen extends React.Component {
   static navigationOptions = {
     title: "Scan a Card"
@@ -56,20 +56,22 @@ export default class LinksScreen extends React.Component {
     );
   }
 
-  handleBarCodeScanned = ({ type, data }) => {
+  asynchandleBarCodeScanned = ({ type, data }) => {
     this.setState({ scanned: true });
-
-    var cardsRef = db.collection("Contacts");
+    var cardsRef = db.collection("Cards");
     cardsRef
-      .doc(data.userID)
+      .doc(firebase.auth().currentUser.uid)
+      .collection("Contacts")
       .set({
-        name: data.name,
-        url: this.state.url,
-        date: new Date(),
-        insta: data.insta,
-        linkedin: data.linkedin,
-        twitter: data.twitter
-        // image: this.state.image,
+        [data.userID]: {
+          name: data.name,
+          url: this.state.url,
+          date: new Date(),
+          insta: data.insta,
+          linkedin: data.linkedin,
+          twitter: data.twitter
+          // image: this.state.image
+        }
       })
       .then(response => {
         alert(

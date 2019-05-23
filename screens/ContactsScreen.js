@@ -12,6 +12,7 @@ import {
 import firebase from "../firebase";
 import "firebase/auth";
 import { Container, Header, Item, Input, Icon, Button } from "native-base";
+var db = firebase.firestore();
 export default class ContactsScreen extends React.Component {
   static navigationOptions = {
     header: null
@@ -84,7 +85,21 @@ export default class ContactsScreen extends React.Component {
       ]
     };
   }
-
+  componentDidMount() {
+    db.collection("Cards")
+      .doc(firebase.auth().currentUser.uid)
+      .collection("Contacts")
+      .get()
+      .then(function(querySnapshot) {
+        querySnapshot.forEach(function(doc) {
+          // doc.data() is never undefined for query doc snapshots
+          console.log(doc.id, " => ", doc.data());
+        });
+      })
+      .catch(function(error) {
+        console.log("Error getting documents: ", error);
+      });
+  }
   clickEventListener(item) {
     this.props.navigation.navigate({
       routeName: "Profiles",
@@ -98,14 +113,14 @@ export default class ContactsScreen extends React.Component {
   render() {
     return (
       <View style={styles.container}>
-        <Header style={{ backgroundColor: "#00aaff" }} searchBar rounded>
+        <Header style={{ backgroundColor: "white" }} searchBar rounded>
           <Item>
-            <Icon style={{ color: "white" }} name="ios-search" />
-            <Input style={{ color: "white" }} placeholder="Search" />
-            <Icon style={{ color: "white" }} name="ios-people" />
+            <Icon style={{ color: "#2A363b" }} name="ios-search" />
+            <Input style={{ color: "#2A363b" }} placeholder="Search" />
+            <Icon style={{ color: "#E84A5f" }} name="ios-people" />
           </Item>
           <Button transparent>
-            <Text style={{ color: "white" }}>Search</Text>
+            <Text style={{ color: "#2A363b" }}>Search</Text>
           </Button>
         </Header>
         <FlatList
@@ -165,7 +180,7 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingHorizontal: 5,
-    backgroundColor: "#E6E6E6"
+    backgroundColor: "#2A363b"
   },
   listContainer: {
     alignItems: "center"

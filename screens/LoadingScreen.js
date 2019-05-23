@@ -3,6 +3,7 @@ import React from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import firebase from "../firebase";
 import "firebase/auth";
+import { Spinner } from "native-base";
 
 export default class Loading extends React.Component {
   componentDidMount() {
@@ -13,7 +14,7 @@ export default class Loading extends React.Component {
   render() {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" />
+        <Spinner color="red" style={{ marginTop: 80 }} />
       </View>
     );
   }
@@ -23,6 +24,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#00aaff"
+    backgroundColor: "white"
   }
 });

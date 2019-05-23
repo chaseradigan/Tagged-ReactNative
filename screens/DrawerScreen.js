@@ -1,7 +1,15 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { Alert } from "react-native";
-import { Button, Icon, Container, Content, Text } from "native-base";
+import {
+  Button,
+  Icon,
+  Container,
+  Content,
+  Text,
+  Left,
+  Header
+} from "native-base";
 import firebase from "../firebase";
 import "firebase/firestore";
 import "firebase/auth";
@@ -24,6 +32,11 @@ export default class DrawerScreen extends React.Component {
   render() {
     return (
       <Container>
+        <Header style={{ marginTop: 0 }} span>
+          <Left>
+            <Text style={{ paddingTop: 10 }}>Chase Radigan</Text>
+          </Left>
+        </Header>
         <Content
           contentContainerStyle={{
             justifyContent: "center",
@@ -38,6 +51,7 @@ export default class DrawerScreen extends React.Component {
             onPress={() => {
               Alert.alert("Alert", "Button pressed ");
             }}
+            style={styles.buttonBorder}
           >
             <Icon name="cog" />
             <Text>Settings</Text>
@@ -50,6 +64,7 @@ export default class DrawerScreen extends React.Component {
             onPress={() => {
               Alert.alert("Alert", "Button pressed ");
             }}
+            style={styles.buttonBorderLast}
           >
             <Icon name="information-circle" />
             <Text>About</Text>
@@ -89,5 +104,15 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "flex-start",
     paddingHorizontal: 20
+  },
+  buttonBorder: {
+    borderTopColor: "grey",
+    borderTopWidth: 1
+  },
+  buttonBorderLast: {
+    borderTopColor: "grey",
+    borderTopWidth: 1,
+    borderBottomColor: "grey",
+    borderBottomWidth: 1
   }
 });

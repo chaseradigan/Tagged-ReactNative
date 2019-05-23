@@ -19,9 +19,13 @@ export default class HomeScreen extends React.Component {
     exists: false,
     loaded: false,
     value: {
+      userID: "",
+      image: null,
       name: "",
       url: "",
-      userID: ""
+      insta: "",
+      twitter: "",
+      linkedin: ""
     },
     visible: false
   };
@@ -35,7 +39,7 @@ export default class HomeScreen extends React.Component {
             navigation.navigate("Settings");
           }}
         >
-          <Icon name="more" style={{ color: "white" }} />
+          <Icon name="more" style={{ color: "#E84A5f" }} />
         </Button>
       ),
       headerLeft: (
@@ -45,14 +49,14 @@ export default class HomeScreen extends React.Component {
             navigation.openDrawer();
           }}
         >
-          <Icon name="menu" style={{ color: "white" }} />
+          <Icon name="menu" style={{ color: "#E84A5f" }} />
         </Button>
       ),
       headerStyle: {
-        backgroundColor: "#00aaff"
+        backgroundColor: "white"
       },
       headerTitleStyle: {
-        color: "white",
+        color: "#2A363b",
         fontWeight: "bold"
       }
     };
@@ -61,12 +65,7 @@ export default class HomeScreen extends React.Component {
     this.setState({ visible: true });
   };
   handleCreateCard() {
-    this.props.navigation.navigate({
-      routeName: "Settings",
-      params: {
-        userID: this.state.value.userID
-      }
-    });
+    this.props.navigation.navigate("Settings");
   }
   refreshCard = () => {
     var docRef = db.collection("Cards").doc(firebase.auth().currentUser.uid);
@@ -75,16 +74,9 @@ export default class HomeScreen extends React.Component {
       .then(doc => {
         if (doc.exists) {
           this.setState({
-            value: {
-              name: doc.data().name,
-              url: doc.data().url,
-              userID: docRef.id
-            },
+            value: doc.data(),
             exists: true,
             loaded: true
-          });
-          this.props.navigation.setParams({
-            userValues: this.state.value
           });
         } else {
           this.setState({
@@ -126,26 +118,24 @@ export default class HomeScreen extends React.Component {
                     <QRCode
                       value={this.state.value}
                       size={250}
-                      bgColor="black"
+                      bgColor="#2A363b"
                       fgColor="white"
                     />
                   </View>
                 </View>
               ) : (
-                <Container>
-                  <Content>
-                    {this.state.loaded ? (
-                      <Button
-                        title="Create a card"
-                        onPress={this.handleCreateCard}
-                      >
-                        <Text>Create a Card</Text>
-                      </Button>
-                    ) : (
-                      <Spinner style={{ marginTop: 40 }} color="grey" />
-                    )}
-                  </Content>
-                </Container>
+                <View>
+                  {this.state.loaded ? (
+                    <Button
+                      title="Create a card"
+                      onPress={this.handleCreateCard}
+                    >
+                      <Text>Create a Card</Text>
+                    </Button>
+                  ) : (
+                    <Spinner style={{ marginTop: 40 }} color="grey" />
+                  )}
+                </View>
               )}
             </View>
           </View>
@@ -162,7 +152,7 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 0,
-    backgroundColor: "white",
+    backgroundColor: "rgb(42, 54, 59)",
     shadowColor: "#000000",
     shadowOffset: {
       width: 0,
@@ -179,8 +169,8 @@ const styles = StyleSheet.create({
     width: 130,
     height: 130,
     borderRadius: 63,
-    borderWidth: 4,
-    borderColor: "black",
+    borderWidth: 2,
+    borderColor: "#E84A5f",
     marginBottom: 20,
     marginTop: 20
   },
@@ -197,12 +187,12 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 22,
-    color: "#000000",
+    color: "white",
     fontWeight: "600"
   },
   userInfo: {
     fontSize: 16,
-    color: "#778899",
+    color: "white",
     fontWeight: "600"
   },
   body: {

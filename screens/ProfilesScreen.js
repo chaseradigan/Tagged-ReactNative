@@ -8,6 +8,9 @@ import {
   Alert,
   ScrollView
 } from "react-native";
+import firebase from "../firebase";
+import "firebase/auth";
+import "firebase/firestore";
 import { Button, Icon } from "native-base";
 export default class ProfilesScreen extends Component {
   constructor(props) {
@@ -31,6 +34,7 @@ export default class ProfilesScreen extends Component {
       )
     };
   };
+
   onClickListener = viewId => {
     Alert.alert("Alert", "Button pressed " + viewId);
   };
