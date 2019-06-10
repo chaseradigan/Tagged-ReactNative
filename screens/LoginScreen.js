@@ -23,9 +23,8 @@ export default class LoginScreen extends React.Component {
         .auth()
         .signInWithEmailAndPassword(this.state.email, this.state.password);
     } catch (error) {
-      console.log(error.toString(error));
+      this.setState({ errorMessage: error });
     }
-    console.log("handleLogin");
   };
   render() {
     return (
@@ -40,15 +39,22 @@ export default class LoginScreen extends React.Component {
             margin: 10
           }}
         >
-          {this.state.errorMessage && (
-            <Text style={{ color: "red" }}>{this.state.errorMessage}</Text>
-          )}
+          <View style={{ alignItems: "center" }}>
+            <Icon
+              color="grey"
+              type="AntDesign"
+              name="barcode"
+              style={{ fontSize: 60 }}
+            />
+            {this.state.errorMessage && (
+              <Text style={{ color: "red" }}>{this.state.errorMessage}</Text>
+            )}
+          </View>
           <Form>
             <Item rounded style={{ marginTop: 20, marginBottom: 10 }}>
               <Icon name="mail" />
               <Input
                 style={{ marginLeft: 10 }}
-                inpu
                 autoCapitalize="none"
                 placeholder="Email"
                 onChangeText={email => this.setState({ email })}
@@ -81,9 +87,7 @@ export default class LoginScreen extends React.Component {
             <Text>Login</Text>
           </Button>
           <View style={{ alignItems: "center" }}>
-            <Text>Or</Text>
             <Text>Don't have an account?</Text>
-
             <Button
               info
               transparent

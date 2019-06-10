@@ -1,21 +1,24 @@
 import React, { Component } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableHighlight,
-  Image,
-  Alert,
-  ScrollView
-} from "react-native";
+import { StyleSheet, TouchableHighlight, Image, Alert } from "react-native";
 import firebase from "../firebase";
 import "firebase/auth";
 import "firebase/firestore";
-import { Button, Icon } from "native-base";
+import "firebase/storage";
+import { Text, View, Button, Icon, Container, Content } from "native-base";
+import { SocialIcon, Avatar } from "react-native-elements";
+
+var db = firebase.firestore();
+var st = firebase.storage();
 export default class ProfilesScreen extends Component {
   constructor(props) {
     super(props);
   }
+  state = {
+    exists: false,
+    loaded: false,
+    value: {},
+    image: null
+  };
   static navigationOptions = ({ navigation }) => {
     return {
       headerTitle: null,
@@ -28,74 +31,144 @@ export default class ProfilesScreen extends Component {
             navigation.goBack();
           }}
         >
-          <Icon name="arrow-back" />
-          <Text>Back</Text>
+          <Icon style={{ color: "#ff2f56" }} name="arrow-back" />
+          <Text style={{ color: "#ff2f56" }}>Back</Text>
         </Button>
-      )
+      ),
+      tabBarVisible: false
     };
   };
 
   onClickListener = viewId => {
-    Alert.alert("Alert", "Button pressed " + viewId);
+    Alert.alert("Alert", "Button pressed " + viewId + `${this.state.value}`);
   };
-
-  render() {
+  componentDidMount() {
     const { navigation } = this.props;
     const itemId = navigation.getParam("itemId", "NO-ID");
     const title = navigation.getParam("title", "some default value");
+
+    var docRef = db
+      .collection("Cards")
+      .doc(firebase.auth().currentUser.uid)
+      .collection("Contacts")
+      .doc(itemId)
+      .get()
+      .then(doc => {
+        if (doc.exists) {
+          this.setState({
+            value: doc.data(),
+            exists: true,
+            loaded: true
+          });
+        } else {
+          this.setState({
+            loaded: true,
+            exists: false
+          });
+          console.log("No such document!");
+        }
+      })
+      .catch(function(error) {
+        console.log("Error getting document:", error);
+      });
+    var storageRef = st
+      .ref()
+      .child(itemId)
+      .getDownloadURL()
+      .then(response => {
+        if (response != null) {
+          this.setState({
+            image: response
+          });
+        }
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  }
+  //https://www.npmjs.com/package/react-native-custom-qr-codes-expo custome qrCodes
+  render() {
     return (
-      <ScrollView style={styles.scrollContainer}>
-        <View style={styles.container}>
-          <View style={styles.box}>
-            <Image
-              style={styles.profileImage}
-              source={{
-                uri: "https://bootdey.com/img/Content/avatar/avatar6.png"
-              }}
-            />
-            <Text style={styles.name}>{title}</Text>
+      <Container>
+        <Content>
+          <View style={styles.container}>
+            <View style={styles.header}>
+              {this.state.exists ? (
+                <View style={styles.headerContent}>
+                  <Avatar
+                    rounded
+                    size="xlarge"
+                    source={{
+                      uri: this.state.image
+                    }}
+                  />
+                  <Text style={styles.name}>{this.state.value.name}</Text>
+                  <Text style={styles.name}>{this.state.value.url}</Text>
+
+                  <View style={styles.buttonContainer}>
+                    <TouchableHighlight
+                      style={[styles.button, styles.buttonMessage]}
+                      onPress={() => this.onClickListener("message")}
+                    >
+                      <Icon name="person-add" />
+                    </TouchableHighlight>
+
+                    <TouchableHighlight
+                      style={[styles.button, styles.buttonLinkedIn]}
+                      onPress={() => this.onClickListener("linkedin")}
+                    >
+                      <Icon name="logo-linkedin" />
+                    </TouchableHighlight>
+
+                    <SocialIcon
+                      button
+                      type="instagram"
+                      onPress={() => this.onClickListener("instagram")}
+                    />
+
+                    <SocialIcon
+                      button
+                      type="twitter"
+                      onPress={() => this.onClickListener("phone")}
+                    />
+                  </View>
+                </View>
+              ) : (
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: 300
+                  }}
+                >
+                  <Text>Profile doesn't exist</Text>
+                </View>
+              )}
+            </View>
           </View>
-          <View style={styles.buttonContainer}>
-            <TouchableHighlight
-              style={[styles.button, styles.buttonMessage]}
-              onPress={() => this.onClickListener("message")}
-            >
-              <Icon name="person-add" />
-            </TouchableHighlight>
-
-            <TouchableHighlight
-              style={[styles.button, styles.buttonLinkedIn]}
-              onPress={() => this.onClickListener("linkedin")}
-            >
-              <Icon name="logo-linkedin" />
-            </TouchableHighlight>
-
-            <TouchableHighlight
-              style={[styles.button, styles.buttonInstagram]}
-              onPress={() => this.onClickListener("instagram")}
-            >
-              <Icon name="logo-instagram" />
-            </TouchableHighlight>
-
-            <TouchableHighlight
-              style={[styles.button, styles.buttonTwitter]}
-              onPress={() => this.onClickListener("phone")}
-            >
-              <Icon name="logo-twitter" />
-            </TouchableHighlight>
-          </View>
-        </View>
-      </ScrollView>
+        </Content>
+      </Container>
     );
   }
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
+  container: {
+    padding: 15,
     flex: 1
   },
-  container: {
-    padding: 20
+  header: {
+    marginBottom: 0,
+    backgroundColor: "rgb(42, 54, 59)",
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 3
+    },
+    shadowRadius: 5,
+    shadowOpacity: 0.8,
+    borderRadius: 15
   },
   box: {
     marginTop: 10,
@@ -110,10 +183,9 @@ const styles = StyleSheet.create({
     elevation: 2,
     paddingTop: 10
   },
-  profileImage: {
-    width: 300,
-    height: 300,
-    marginBottom: 20
+  headerContent: {
+    padding: 20,
+    alignItems: "center"
   },
   name: {
     fontSize: 35,

@@ -1,33 +1,44 @@
 import React from "react";
+import { StyleSheet, View, Image, TouchableHighlight } from "react-native";
+import Modal from "react-native-modal";
 import {
-  StyleSheet,
+  Button,
+  Icon,
+  Content,
+  Spinner,
+  Container,
   Text,
-  View,
-  Image,
-  TouchableHighlight
-} from "react-native";
-import { Button, Icon, Content, Spinner, Container } from "native-base";
+  Header,
+  Left
+} from "native-base";
 import QRCode from "react-native-qrcode";
 import firebase from "../firebase";
 import "firebase/auth";
 import "firebase/firestore";
+import "firebase/storage";
 import { NavigationEvents } from "react-navigation";
+import { Avatar } from "react-native-elements";
 
 var db = firebase.firestore();
+var st = firebase.storage();
 export default class HomeScreen extends React.Component {
+  constructor(props) {
+    super(props);
+  }
   state = {
     exists: false,
     loaded: false,
     value: {
       userID: "",
-      image: null,
       name: "",
       url: "",
       insta: "",
       twitter: "",
       linkedin: ""
     },
-    visible: false
+    visible: false,
+    image: null,
+    modalVisible: false
   };
   static navigationOptions = ({ navigation }) => {
     return {
@@ -39,7 +50,7 @@ export default class HomeScreen extends React.Component {
             navigation.navigate("Settings");
           }}
         >
-          <Icon name="more" style={{ color: "#E84A5f" }} />
+          <Icon name="more" style={{ color: "#ff2f56" }} />
         </Button>
       ),
       headerLeft: (
@@ -49,25 +60,71 @@ export default class HomeScreen extends React.Component {
             navigation.openDrawer();
           }}
         >
-          <Icon name="menu" style={{ color: "#E84A5f" }} />
+          <Icon name="menu" style={{ color: "#ff2f56" }} />
         </Button>
       ),
       headerStyle: {
         backgroundColor: "white"
       },
       headerTitleStyle: {
-        color: "#2A363b",
+        color: "#2A363B",
         fontWeight: "bold"
       }
     };
   };
+
   QRtouched = () => {
     this.setState({ visible: true });
   };
-  handleCreateCard() {
-    this.props.navigation.navigate("Settings");
-  }
+
   refreshCard = () => {
+    this.setState({
+      exists: false,
+      loaded: false,
+      notification: {}
+    });
+    var docRef = db.collection("Cards").doc(firebase.auth().currentUser.uid);
+    docRef
+      .get()
+      .then(doc => {
+        if (doc.exists) {
+          this.setState({
+            value: doc.data(),
+            exists: true,
+            loaded: true
+          });
+        } else {
+          this.setState({
+            loaded: true,
+            exists: false
+          });
+        }
+      })
+      .catch(function(error) {
+        console.log("Error getting document:", error);
+      });
+    var storageRef = st
+      .ref()
+      .child(firebase.auth().currentUser.uid)
+      .getDownloadURL()
+      .then(response => {
+        if (response != null) {
+          this.setState({
+            image: response
+          });
+        }
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  };
+
+  componentWillMount() {
+    this.setState({
+      exists: false,
+      loaded: false,
+      notification: {}
+    });
     var docRef = db.collection("Cards").doc(firebase.auth().currentUser.uid);
     docRef
       .get()
@@ -89,90 +146,215 @@ export default class HomeScreen extends React.Component {
       .catch(function(error) {
         console.log("Error getting document:", error);
       });
-  };
-  componentDidMount() {
-    this.refreshCard();
+    var storageRef = st
+      .ref()
+      .child(firebase.auth().currentUser.uid)
+      .getDownloadURL()
+      .then(response => {
+        if (response != null) {
+          this.setState({
+            image: response
+          });
+        }
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
   }
 
+  // componentDidMount() {
+  //   registerForPushNotificationsAsync();
+  //   this._notificationSubscription = Notifications.addListener(
+  //     this._handleNotification
+  //   );
+  // }
+
+  // _handleNotification = notification => {
+  //   this.setState({ notification: notification });
+  // };
+
+  // sendPushNotification = async () => {
+  //   const message = {
+  //     to: YOUR_PUSH_TOKEN,
+  //     sound: "default",
+  //     title: "Original Title",
+  //     body: "And here is the body!",
+  //     data: { data: "goes here" }
+  //   };
+  //   const response = await fetch("https://exp.host/--/api/v2/push/send", {
+  //     method: "POST",
+  //     headers: {
+  //       Accept: "application/json",
+  //       "Accept-encoding": "gzip, deflate",
+  //       "Content-Type": "application/json"
+  //     },
+  //     body: JSON.stringify(message)
+  //   });
+  //   const data = response._bodyInit;
+  //   console.log(`Status & Response ID-> ${data}`);
+  // };
+  openModal() {
+    this.setState({ modalVisible: true });
+  }
+
+  closeModal() {
+    this.setState({ modalVisible: false });
+  }
   render() {
     return (
       <Container>
         <NavigationEvents onWillFocus={this.refreshCard} />
         <Content>
           <View style={styles.container}>
-            <View style={styles.header}>
-              {this.state.exists ? (
+            {this.state.exists ? (
+              <View style={styles.header}>
                 <View style={styles.headerContent}>
-                  <Image
-                    style={styles.avatar}
+                  <Avatar
+                    rounded
+                    size={200}
                     source={{
-                      uri: "https://bootdey.com/img/Content/avatar/avatar6.png"
+                      uri: this.state.image
                     }}
+                    renderPlaceholderContent={
+                      <Icon
+                        style={{ fontSize: 150 }}
+                        type="Ionicons"
+                        name="contact"
+                      />
+                    }
                   />
 
                   <Text style={styles.name}>{this.state.value.name} </Text>
-                  <Text style={styles.userInfo}>{this.state.value.url} </Text>
-                  <Text style={styles.userInfo}>More info </Text>
+                  <Text style={styles.info}>{this.state.value.url} </Text>
 
                   <View style={styles.qr}>
-                    <QRCode
-                      value={this.state.value}
-                      size={250}
-                      bgColor="#2A363b"
-                      fgColor="white"
-                    />
+                    <TouchableHighlight
+                      activeOpacity={0.9}
+                      onPress={() => this.openModal()}
+                    >
+                      <QRCode
+                        value={this.state.value}
+                        size={200}
+                        bgColor="#2A363b"
+                        fgColor="white"
+                      />
+                    </TouchableHighlight>
                   </View>
                 </View>
-              ) : (
-                <View>
-                  {this.state.loaded ? (
+              </View>
+            ) : (
+              <View>
+                {this.state.loaded ? (
+                  <View
+                    style={{
+                      alignSelf: "center",
+                      marginBottom: 100,
+                      marginTop: 100
+                    }}
+                  >
                     <Button
+                      large
+                      transparent
+                      light
+                      iconLeft
                       title="Create a card"
-                      onPress={this.handleCreateCard}
+                      onPress={() => this.props.navigation.navigate("Settings")}
                     >
+                      <Icon name="add-circle" />
                       <Text>Create a Card</Text>
                     </Button>
-                  ) : (
-                    <Spinner style={{ marginTop: 40 }} color="grey" />
-                  )}
-                </View>
-              )}
-            </View>
+                  </View>
+                ) : (
+                  <Spinner
+                    style={{ marginTop: 40, marginBottom: 40 }}
+                    color="#ff2f56"
+                  />
+                )}
+              </View>
+            )}
           </View>
         </Content>
+        <Modal
+          isVisible={this.state.modalVisible}
+          onSwipeComplete={() => this.closeModal()}
+          swipeDirection={["left", "right", "up"]}
+          swipeThreshold={40}
+          animationIn={"zoomIn"}
+          animationOut={"zoomOut"}
+        >
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center"
+            }}
+          >
+            <TouchableHighlight onPress={() => this.closeModal()}>
+              <View style={{ padding: 30, backgroundColor: "white" }}>
+                <QRCode
+                  value={this.state.value}
+                  size={300}
+                  bgColor="#2A363b"
+                  fgColor="white"
+                />
+              </View>
+            </TouchableHighlight>
+          </View>
+        </Modal>
       </Container>
     );
   }
 }
 
+async function registerForPushNotificationsAsync() {
+  const { status: existingStatus } = await Permissions.getAsync(
+    Permissions.NOTIFICATIONS
+  );
+  let finalStatus = existingStatus;
+
+  // only ask if permissions have not already been determined, because
+  // iOS won't necessarily prompt the user a second time.
+  if (existingStatus !== "granted") {
+    // Android remote notification permissions are granted during the app
+    // install, so this will only ask on iOS
+    const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+    finalStatus = status;
+  }
+
+  // Stop here if the user did not grant permissions
+  if (finalStatus !== "granted") {
+    return;
+  }
+
+  // Get the token that uniquely identifies this device
+  let token = await Notifications.getExpoPushTokenAsync();
+  coonsole.log(token);
+}
+
 const styles = StyleSheet.create({
   container: {
     padding: 15,
+    marginBottom: 0,
     flex: 1
   },
   header: {
     marginBottom: 0,
-    backgroundColor: "rgb(42, 54, 59)",
+    backgroundColor: "rgb(242,242,247)",
     shadowColor: "#000000",
     shadowOffset: {
       width: 0,
       height: 3
     },
     shadowRadius: 5,
-    shadowOpacity: 0.8
+    shadowOpacity: 0.7,
+    borderRadius: 15,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.1)"
   },
   headerContent: {
     padding: 20,
     alignItems: "center"
-  },
-  avatar: {
-    width: 130,
-    height: 130,
-    borderRadius: 63,
-    borderWidth: 2,
-    borderColor: "#E84A5f",
-    marginBottom: 20,
-    marginTop: 20
   },
   qr: {
     padding: 10,
@@ -183,16 +365,16 @@ const styles = StyleSheet.create({
       height: 3
     },
     shadowRadius: 5,
-    shadowOpacity: 0.8
+    shadowOpacity: 0.7
   },
   name: {
-    fontSize: 22,
-    color: "white",
+    fontSize: 26,
+    color: "#2A363B",
     fontWeight: "600"
   },
   userInfo: {
-    fontSize: 16,
-    color: "white",
+    fontSize: 20,
+    color: "#2A363B",
     fontWeight: "600"
   },
   body: {
@@ -200,29 +382,9 @@ const styles = StyleSheet.create({
 
     alignItems: "center"
   },
-  item: {
-    flexDirection: "row"
-  },
-  infoContent: {
-    flex: 1,
-    alignItems: "flex-start",
-    paddingLeft: 5
-  },
-  iconContent: {
-    flex: 1,
-    alignItems: "flex-start",
-    paddingRight: 20,
-    paddingTop: 20,
-    backgroundColor: "#DCDCDC"
-  },
-  icon: {
-    width: 30,
-    height: 30,
-    marginTop: 20
-  },
   info: {
-    fontSize: 18,
-    marginTop: 20,
+    fontSize: 22,
+    marginTop: 10,
     color: "black"
   }
 });

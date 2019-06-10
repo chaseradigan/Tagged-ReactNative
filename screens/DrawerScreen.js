@@ -1,23 +1,31 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
-import { Alert } from "react-native";
+import { Alert, StyleSheet } from "react-native";
 import {
   Button,
-  Icon,
   Container,
   Content,
   Text,
   Left,
-  Header
+  Header,
+  View,
+  Body,
+  Right
 } from "native-base";
 import firebase from "../firebase";
-import "firebase/firestore";
+import "firebase/storage";
 import "firebase/auth";
+import { Avatar, ListItem, Icon } from "react-native-elements";
 
+var st = firebase.storage();
 export default class DrawerScreen extends React.Component {
   constructor(props) {
     super(props);
   }
+  state = {
+    image: null,
+    loaded: false
+  };
+
   handleLogout = () => {
     firebase
       .auth()
@@ -29,46 +37,76 @@ export default class DrawerScreen extends React.Component {
         console.log(error.response);
       });
   };
+  componentDidMount() {
+    var storageRef = st
+      .ref()
+      .child(firebase.auth().currentUser.uid)
+      .getDownloadURL()
+      .then(response => {
+        if (response != null) {
+          this.setState({
+            image: response,
+            loaded: true
+          });
+          console.log(this.state.image);
+        }
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  }
   render() {
     return (
       <Container>
-        <Header style={{ marginTop: 0 }} span>
+        <Header>
           <Left>
-            <Text style={{ paddingTop: 10 }}>Chase Radigan</Text>
+            {this.state.loaded ? (
+              <Avatar
+                rounded
+                size="small"
+                source={{
+                  uri: this.state.image
+                }}
+                renderPlaceholderContent={<Icon type="feather" name="user" />}
+              />
+            ) : (
+              <Text>Title</Text>
+            )}
           </Left>
+          <Body>
+            <Text>Profile</Text>
+          </Body>
+          <Right />
         </Header>
         <Content
           contentContainerStyle={{
-            justifyContent: "center",
             flex: 1
           }}
         >
-          <Button
-            full
-            transparent
-            dark
-            iconLeft
+          <ListItem
+            title={"Settings"}
             onPress={() => {
-              Alert.alert("Alert", "Button pressed ");
+              Alert.alert("Alert", "ListItem pressed ");
             }}
-            style={styles.buttonBorder}
-          >
-            <Icon name="cog" />
-            <Text>Settings</Text>
-          </Button>
-          <Button
-            full
-            transparent
-            dark
-            iconLeft
+            leftIcon={{ name: "settings", type: "feather" }}
+            chevron
+          />
+          <ListItem
+            title={"About"}
             onPress={() => {
-              Alert.alert("Alert", "Button pressed ");
+              Alert.alert("Alert", "About pressed ");
             }}
-            style={styles.buttonBorderLast}
-          >
-            <Icon name="information-circle" />
-            <Text>About</Text>
-          </Button>
+            leftIcon={{ name: "external-link", type: "feather" }}
+            chevron
+          />
+          <ListItem
+            title={"Info"}
+            onPress={() => {
+              Alert.alert("Alert", "Info pressed ");
+            }}
+            leftIcon={{ name: "alert-circle", type: "feather" }}
+            chevron
+          />
         </Content>
 
         <View
@@ -82,10 +120,12 @@ export default class DrawerScreen extends React.Component {
             full
             transparent
             dark
+            iconLeft
             onPress={this.handleLogout}
             style={{ alignSelf: "center", marginRight: 0, marginLeft: 0 }}
           >
-            <Text>Log Out</Text>
+            <Icon name="log-out" type="feather" color="#ff2f56" />
+            <Text style={{ color: "#ff2f56" }}>Log Out</Text>
           </Button>
         </View>
       </Container>

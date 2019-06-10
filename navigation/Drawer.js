@@ -12,7 +12,8 @@ const DrawerNavigator = createDrawerNavigator(
     drawerPosition: "left",
     initialRouteName: "Home",
     drawerWidth: 200,
-    contentComponent: DrawerScreen
+    contentComponent: DrawerScreen,
+    hideStatusBar: true
   }
 );
 export default DrawerNavigator;

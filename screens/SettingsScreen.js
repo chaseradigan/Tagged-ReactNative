@@ -2,7 +2,7 @@ import React from "react";
 import firebase from "../firebase";
 import "firebase/firestore";
 import "firebase/auth";
-import { Ionicons } from "@expo/vector-icons";
+import "firebase/storage";
 import {
   Container,
   Header,
@@ -15,13 +15,42 @@ import {
   Icon,
   View,
   Text,
-  Footer
+  Spinner
 } from "native-base";
 import { ImagePicker } from "expo";
-import { Image, StyleSheet, Alert } from "react-native";
-
+import { StyleSheet, Alert, ScrollView, ActionSheetIOS } from "react-native";
+import { Avatar } from "react-native-elements";
 import { CAMERA_ROLL, Permissions } from "expo";
 var db = firebase.firestore();
+var st = firebase.storage();
+async function uploadImageAsync(uri) {
+  // Why are we using XMLHttpRequest? See:
+  // https://github.com/expo/expo/issues/2402#issuecomment-443726662
+  const blob = await new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.onload = function() {
+      resolve(xhr.response);
+    };
+    xhr.onerror = function(e) {
+      console.log(e);
+      reject(new TypeError("Network request failed"));
+    };
+    xhr.responseType = "blob";
+    xhr.open("GET", uri, true);
+    xhr.send(null);
+  });
+
+  const ref = firebase
+    .storage()
+    .ref()
+    .child(firebase.auth().currentUser.uid);
+  const snapshot = await ref.put(blob);
+
+  // We're done with the blob, close and release it
+  blob.close();
+
+  return await snapshot.ref.getDownloadURL();
+}
 export default class SettingsScreen extends React.Component {
   constructor(props) {
     super(props);
@@ -37,9 +66,10 @@ export default class SettingsScreen extends React.Component {
             navigation.goBack();
           }}
         >
-          <Icon name="arrow-back" style={{ color: "#2A363b" }} />
+          <Icon name="arrow-back" style={{ color: "#ff2f56" }} />
         </Button>
-      )
+      ),
+      tabBarVisible: false
     };
   };
   state = {
@@ -64,6 +94,7 @@ export default class SettingsScreen extends React.Component {
             url: doc.data().url,
             insta: doc.data().insta,
             twitter: doc.data().twitter,
+            linkedin: doc.data().linkedin,
             exists: true,
             loaded: true
           });
@@ -77,6 +108,38 @@ export default class SettingsScreen extends React.Component {
         console.log("Error getting document:", error);
       });
   }
+  componentDidMount() {
+    var storageRef = st
+      .ref()
+      .child(firebase.auth().currentUser.uid)
+      .getDownloadURL()
+      .then(response => {
+        if (response != null) {
+          this.setState({
+            image: response
+          });
+        }
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  }
+  showActionSheet = () => {
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        message: "Are you sure you want to delete this card?",
+        options: ["Yes", "No"],
+        destructiveButtonIndex: 1,
+        cancelButtonIndex: 0
+      },
+      buttonIndex => {
+        if (buttonIndex === 1) {
+          this.handleDelete;
+        }
+      }
+    );
+  };
+
   handleDelete = () => {
     db.collection("Cards")
       .doc(firebase.auth().currentUser.uid)
@@ -87,8 +150,11 @@ export default class SettingsScreen extends React.Component {
       .catch(function(error) {
         Alert.alert("Alert", error.response);
       });
+
+    this.handleUpdate();
   };
   handleUpdate = () => {
+    this.setState({ saved: false });
     var docRef = db.collection("Cards").doc(firebase.auth().currentUser.uid);
     var o = {};
     o.name = this.state.name;
@@ -96,10 +162,10 @@ export default class SettingsScreen extends React.Component {
     if (this.state.insta.length > 0) {
       o.insta = this.state.insta;
     }
-    if (this.state.linkedin.length > 1) {
+    if (this.state.linkedin.length > 0) {
       o.linkedin = this.state.linkedin;
     }
-    if (this.state.twitter.length > 1) {
+    if (this.state.twitter.length > 0) {
       o.twitter = this.state.twitter;
     }
     docRef.update(o);
@@ -109,13 +175,16 @@ export default class SettingsScreen extends React.Component {
     console.log("Update");
   };
   handleSave = () => {
+    this.setState({ saved: false });
     var cardsRef = db.collection("Cards");
     cardsRef
       .doc(firebase.auth().currentUser.uid)
       .set({
         name: this.state.name,
-        url: this.state.url
-        // image: this.state.image,
+        url: this.state.url,
+        twitter: this.state.twitter,
+        linkedin: this.state.linkedin,
+        insta: this.state.insta
       })
       .then(response => {
         this.setState({
@@ -125,108 +194,117 @@ export default class SettingsScreen extends React.Component {
       .catch(function(error) {
         console.error("Error adding document: ", error);
       });
-
-    console.log("save");
   };
   render() {
-    let { image } = this.state;
     return (
       <Container>
         <Content
           contentContainerStyle={{
-            justifyContent: "center",
             flex: 1,
-            margin: 10,
-            alignItems: "center"
+            margin: 10
           }}
         >
           <View style={styles.container}>
-            <View style={styles.header}>
-              <Form>
-                <Item>
-                  <Button block transparent info onPress={this._pickImage}>
-                    <Text>Choose Image</Text>
-                  </Button>
-                  {image && (
-                    <Image
-                      source={{ uri: image }}
-                      style={{ width: 200, height: 200 }}
-                    />
+            {this.state.loaded ? (
+              <View style={styles.header}>
+                <ScrollView
+                  scrollEnabled={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  <Form style={styles.headerContent}>
+                    <Item>
+                      <View style={{ alignItems: "Center" }}>
+                        {this.state.image && (
+                          <Avatar
+                            rounded
+                            size="xlarge"
+                            showEditButton={true}
+                            renderPlaceholderContent={
+                              <Icon
+                                type="Ionicons"
+                                style={{ fontSize: 150 }}
+                                name="contact"
+                              />
+                            }
+                            activeOpacity={0.7}
+                            source={{ uri: this.state.image }}
+                            onPress={this._pickImage}
+                          />
+                        )}
+                      </View>
+                    </Item>
+
+                    <Item inlineLabel>
+                      <Label>Name</Label>
+                      <Input
+                        onChangeText={name => this.setState({ name })}
+                        value={this.state.name}
+                      />
+                    </Item>
+                    <Item inlineLabel>
+                      <Label>Phone Number</Label>
+                      <Input
+                        onChangeText={url => this.setState({ url })}
+                        value={this.state.url}
+                      />
+                    </Item>
+                    <Item>
+                      <Icon name="logo-instagram" />
+                      <Input
+                        placeholder="Instagram"
+                        placeholderTextColor="grey"
+                        onChangeText={insta => this.setState({ insta })}
+                        value={this.state.insta}
+                      />
+                    </Item>
+                    <Item>
+                      <Icon name="logo-linkedin" />
+                      <Input
+                        placeholder="LinkedIn"
+                        placeholderTextColor="grey"
+                        onChangeText={linkedin => this.setState({ linkedin })}
+                        value={this.state.linkedin}
+                      />
+                    </Item>
+                    <Item>
+                      <Icon name="logo-twitter" />
+                      <Input
+                        placeholder="Twitter"
+                        placeholderTextColor="grey"
+                        onChangeText={twitter => this.setState({ twitter })}
+                        value={this.state.twitter}
+                      />
+                    </Item>
+                  </Form>
+                </ScrollView>
+                <View style={{ alignItems: "center", paddingBottom: 10 }}>
+                  {this.state.saved ? (
+                    <Icon type="Ionicons" name="checkmark" />
+                  ) : (
+                    <Text />
                   )}
-                  <Image
-                    source={this.image}
-                    style={{ width: 200, height: 200 }}
-                  />
-                </Item>
-                <Item inlineLabel>
-                  <Label>Name</Label>
-                  <Input
-                    onChangeText={name => this.setState({ name })}
-                    value={this.state.name}
-                  />
-                </Item>
-                <Item inlineLabel>
-                  <Label>Phone Number</Label>
-                  <Input
-                    onChangeText={url => this.setState({ url })}
-                    value={this.state.url}
-                  />
-                </Item>
-                <Item>
-                  <Icon name="logo-instagram" />
-                  <Input
-                    placeholder="Instagram"
-                    placeholderTextColor="grey"
-                    onChangeText={insta => this.setState({ insta })}
-                    value={this.state.insta}
-                  />
-                </Item>
-                <Item>
-                  <Icon name="logo-linkedin" />
-                  <Input
-                    placeholder="LinkedIn"
-                    placeholderTextColor="grey"
-                    onChangeText={linkedin => this.setState({ linkedin })}
-                    value={this.state.linkedin}
-                  />
-                </Item>
-                <Item>
-                  <Icon name="logo-twitter" />
-                  <Input
-                    placeholder="Twitter"
-                    placeholderTextColor="grey"
-                    onChangeText={twitter => this.setState({ twitter })}
-                    value={this.state.twitter}
-                  />
-                </Item>
-              </Form>
-              <View style={{ alignItems: "center", paddingBottom: 10 }}>
-                {this.state.saved ? <Text>Saved!</Text> : <Text />}
-                {this.state.exists ? (
-                  <View>
-                    <Button rounded info onPress={this.handleUpdate}>
-                      <Text>Update</Text>
-                    </Button>
-                  </View>
-                ) : (
-                  <View>
-                    {this.state.loaded ? (
+                  {this.state.exists ? (
+                    <View>
+                      <Button rounded info onPress={this.handleUpdate}>
+                        <Text>Update</Text>
+                      </Button>
+                    </View>
+                  ) : (
+                    <View>
                       <Button rounded info onPress={this.handleSave}>
                         <Text>Save</Text>
                       </Button>
-                    ) : (
-                      <Button rounded info>
-                        <Text>Save</Text>
-                      </Button>
-                    )}
-                  </View>
-                )}
+                    </View>
+                  )}
+                </View>
               </View>
-            </View>
+            ) : (
+              <Spinner style={{ marginTop: 40 }} color="#ff2f56" />
+            )}
           </View>
         </Content>
-        <View style={{ marginBottom: 1 }}>
-          <Button iconLeft danger full onPress={this.handleDelete}>
+        <View style={{ marginBottom: 0 }}>
+          <Button iconLeft danger full onPress={this.showActionSheet}>
             <Icon style={{ color: "white" }} name="trash" />
             <Text>Delete</Text>
           </Button>
@@ -234,6 +312,7 @@ export default class SettingsScreen extends React.Component {
       </Container>
     );
   }
+
   _pickImage = async () => {
     const { CAMERA_ROLL, Permissions } = Expo;
     // permissions returns only for location permissions on iOS and under certain conditions, see Permissions.LOCATION
@@ -245,14 +324,13 @@ export default class SettingsScreen extends React.Component {
         allowsEditing: true,
         aspect: [4, 3]
       });
-      this.setState({
-        image: result.uri
-      });
-      console.log(result);
-    } else {
+
       if (!result.cancelled) {
-        this.setState({ image: result.uri });
+        uploadUrl = await uploadImageAsync(result.uri);
+        console.log("Done");
+        this.setState({ image: uploadUrl });
       }
+    } else {
       throw new Error("Camera roll permissions not granted");
     }
   };
@@ -272,7 +350,12 @@ const styles = StyleSheet.create({
       height: 3
     },
     shadowRadius: 5,
-    shadowOpacity: 0.8
+    shadowOpacity: 0.8,
+    borderRadius: 15
+  },
+  headerContent: {
+    padding: 20,
+    alignItems: "center"
   },
   back: {
     flex: 1,

@@ -4,11 +4,21 @@ import "firebase/firestore";
 import "firebase/auth";
 import { Text, View, StyleSheet, Button } from "react-native";
 import { Constants, Permissions, BarCodeScanner } from "expo";
-import { Container, Content, Spinner } from "native-base";
+import {
+  Container,
+  Content,
+  Spinner,
+  Header,
+  Right,
+  Left,
+  Body,
+  Title
+} from "native-base";
+import { Contacts } from "expo";
 var db = firebase.firestore();
 export default class LinksScreen extends React.Component {
   static navigationOptions = {
-    title: "Scan a Card"
+    header: null
   };
   state = {
     hasCameraPermission: null,
@@ -26,7 +36,7 @@ export default class LinksScreen extends React.Component {
       return (
         <Container>
           <Content>
-            <Spinner color="blue" />
+            <Spinner color="grey" />
           </Content>
         </Container>
       );
@@ -35,24 +45,26 @@ export default class LinksScreen extends React.Component {
       return <Text>No access to camera</Text>;
     }
     return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "flex-end"
-        }}
-      >
-        <BarCodeScanner
-          onBarCodeScanned={scanned ? undefined : this.handleBarCodeScanned}
-          style={StyleSheet.absoluteFillObject}
-        />
-
-        {scanned && (
-          <Button
-            title={"Tap to Scan Again"}
-            onPress={() => this.setState({ scanned: false })}
+      <Container>
+        <View
+          style={{
+            flex: 1,
+            marginTop: 0
+          }}
+        >
+          <BarCodeScanner
+            onBarCodeScanned={scanned ? undefined : this.handleBarCodeScanned}
+            style={StyleSheet.absoluteFillObject}
           />
-        )}
-      </View>
+
+          {scanned && (
+            <Button
+              title={"Tap to Scan Again"}
+              onPress={() => this.setState({ scanned: false })}
+            />
+          )}
+        </View>
+      </Container>
     );
   }
 
@@ -62,16 +74,16 @@ export default class LinksScreen extends React.Component {
     cardsRef
       .doc(firebase.auth().currentUser.uid)
       .collection("Contacts")
+      .doc(data.userID)
       .set({
-        [data.userID]: {
-          name: data.name,
-          url: this.state.url,
-          date: new Date(),
-          insta: data.insta,
-          linkedin: data.linkedin,
-          twitter: data.twitter
-          // image: this.state.image
-        }
+        userID: data.userID,
+        name: data.name,
+        url: this.state.url,
+        date: new Date(),
+        insta: data.insta,
+        linkedin: data.linkedin,
+        twitter: data.twitter
+        // image: this.state.image use userid instead in contacts
       })
       .then(response => {
         alert(
@@ -82,9 +94,24 @@ export default class LinksScreen extends React.Component {
         alert("Bar code not scanned!");
         console.error("Error adding document: ", error);
       });
+    const contact = {
+      [Contacts.Fields.FirstName]: `${data.name}`,
+      [Contacts.Fields.PhoneNumbers]: [{ number: data.url, label: "mobile" }]
+    };
+    addContact(contact);
   };
 }
-
+async function addContact(contact) {
+  const contactId = await Contacts.addContactAsync(contact)
+    .then(response => {
+      alert("Added contact to your phone!");
+      console.log(response);
+    })
+    .catch(function(error) {
+      alert("Failed to add contact");
+      console.log(error);
+    });
+}
 const styles = StyleSheet.create({
   container: {
     flex: 1,

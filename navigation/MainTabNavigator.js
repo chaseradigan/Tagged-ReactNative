@@ -11,11 +11,17 @@ import CameraScreen from "../screens/CameraScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import ContactsScreen from "../screens/ContactsScreen";
 import ProfilesScreen from "../screens/ProfilesScreen";
-
-const HomeStack = createStackNavigator({
-  Home: MyCardScreen,
-  Settings: SettingsScreen
-});
+import { flipY, zoomIn } from "react-navigation-transitions";
+import CameraButton from "../components/CameraButton";
+const HomeStack = createStackNavigator(
+  {
+    Home: MyCardScreen,
+    Settings: SettingsScreen
+  },
+  {
+    transitionConfig: () => flipY()
+  }
+);
 
 HomeStack.navigationOptions = {
   tabBarLabel: "Home",
@@ -24,7 +30,8 @@ HomeStack.navigationOptions = {
       focused={focused}
       name={Platform.OS === "ios" ? "ios-contact" : "md-contact"}
     />
-  )
+  ),
+  initialRouteName: "Home"
 };
 
 const CameraStack = createStackNavigator({
@@ -32,19 +39,25 @@ const CameraStack = createStackNavigator({
 });
 
 CameraStack.navigationOptions = {
-  tabBarLabel: "Camera",
+  tabBarLabel: "Scan",
   tabBarIcon: ({ focused }) => (
     <TabBarIcon
       focused={focused}
-      name={Platform.OS === "ios" ? "ios-camera" : "md-camera"}
+      name={Platform.OS === "ios" ? "ios-qr-scanner" : "md-camera"}
     />
   )
 };
 
-const ContactsStack = createStackNavigator({
-  Contacts: ContactsScreen,
-  Profiles: ProfilesScreen
-});
+const ContactsStack = createStackNavigator(
+  {
+    Contacts: ContactsScreen,
+    Profiles: ProfilesScreen
+  },
+  {
+    initialRouteName: "Contacts",
+    transitionConfig: () => zoomIn()
+  }
+);
 
 ContactsStack.navigationOptions = {
   tabBarLabel: "Contacts",
@@ -53,11 +66,21 @@ ContactsStack.navigationOptions = {
       focused={focused}
       name={Platform.OS === "ios" ? "ios-contacts" : "md-contacts"}
     />
-  )
+  ),
+  initialRouteName: "Contacts"
 };
 
-export default createBottomTabNavigator({
-  HomeStack,
-  CameraStack,
-  ContactsStack
-});
+export default createBottomTabNavigator(
+  {
+    HomeStack,
+    CameraStack,
+    ContactsStack
+  },
+  {
+    resetOnBlur: true,
+    tabBarOptions: {
+      activeTintColor: "#ff2f56",
+      inactiveTintColor: "#ccc"
+    }
+  }
+);

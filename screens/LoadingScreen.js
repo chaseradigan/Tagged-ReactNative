@@ -1,9 +1,10 @@
-// Loading.js
+// FIBER?????
 import React from "react";
-import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import firebase from "../firebase";
 import "firebase/auth";
-import { Spinner } from "native-base";
+import { Spinner, Container, Content } from "native-base";
+import { Text, Icon } from "react-native-elements";
 
 export default class Loading extends React.Component {
   componentDidMount() {
@@ -13,9 +14,18 @@ export default class Loading extends React.Component {
   }
   render() {
     return (
-      <View style={styles.container}>
-        <Spinner color="red" style={{ marginTop: 80 }} />
-      </View>
+      <Container>
+        <Content
+          contentContainerStyle={{
+            justifyContent: "center",
+            flex: 1,
+            alignItems: "center"
+          }}
+        >
+          <Icon color="grey" type="antdesign" name="barcode" size={36} />
+          <Spinner color="grey" style={{ marginTop: 5 }} />
+        </Content>
+      </Container>
     );
   }
 }
